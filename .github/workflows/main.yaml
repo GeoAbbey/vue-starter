@@ -1,0 +1,26 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build:
+
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build production container
+      run: docker build . -t geoabbey/vue:production --build-arg=NODE_ENV=production
+      if: contains('refs/heads/main',github.ref)
+    - name: Build staging container
+      run: docker build . -t geoabbey/vue:staging --build-arg=NODE_ENV=staging
+      if: contains('refs/heads/release',github.ref)
+    - name: Build dev container
+      run: docker build . -t geoabbey/vue:develop --build-arg=NODE_ENV=develop
+      if: contains('refs/heads/develop',github.ref)
+    - name: Reload containers
+      run: cd ~/docker/compose && docker compose up -d
